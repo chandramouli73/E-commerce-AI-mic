@@ -1,0 +1,791 @@
+<div id="voice-mic-button-wrapper">
+  <button id="voice-mic-button" aria-label="Open Voice Assistant Chat">🎙️</button>
+
+  <div
+    id="voice-chat-window"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    style="display:none;"
+  >
+    <div
+      style="
+        padding: 12px;
+        height: 420px;
+        width: 360px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        overflow: hidden;
+        position: relative;
+      "
+    >
+      <button
+        id="voice-chat-close"
+        aria-label="Close Chat"
+        style="
+          position: absolute;
+          top: 8px;
+          right: 12px;
+          background: transparent;
+          border: none;
+          font-size: 20px;
+          cursor: pointer;
+        "
+      >
+        &times;
+      </button>
+
+      <h2 style="margin-top: 24px; margin-bottom: 8px;">AI Assistant</h2>
+
+      <div
+        id="chat-content"
+        style="
+          height: 230px;
+          overflow-y: auto;
+          font-size: 14px;
+          color: #333;
+          border: 1px solid #eee;
+          padding: 8px;
+          border-radius: 6px;
+        "
+      >
+        <p>Tap “Start Voice”, say a product name, and I’ll search for it.</p>
+      </div>
+
+      <!-- Voice Row -->
+      <div style="display:flex; margin-top: 10px; gap: 6px; align-items:center;">
+        <button
+          id="voice-start"
+          style="
+            padding:6px 10px;
+            border-radius:4px;
+            border:none;
+            background:#5BEF60;
+            color:#111;
+            font-weight:600;
+            cursor:pointer;
+            flex-shrink:0;
+          "
+        >
+          Start Voice
+        </button>
+        <span id="voice-status" style="font-size:12px; color:#666;">Idle</span>
+      </div>
+
+      <!-- Text Input Search Row -->
+      <div style="display:flex; margin-top: 10px; gap: 6px; align-items:center;">
+        <input
+          id="text-search-input"
+          type="text"
+          placeholder="Type product name…"
+          style="
+            flex:1;
+            padding:6px 8px;
+            border-radius:4px;
+            border:1px solid #ccc;
+            font-size:14px;
+          "
+        />
+
+        <button
+          id="text-search-button"
+          style="
+            padding:6px 10px;
+            border-radius:4px;
+            border:none;
+            background:#4fa9ff;
+            color:white;
+            font-weight:600;
+            cursor:pointer;
+          "
+        >
+          Search
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #voice-mic-button-wrapper {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999999;
+  }
+
+  #voice-mic-button {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #5bef60;
+    color: white;
+    font-size: 28px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  }
+
+  #voice-chat-window {
+    position: fixed;
+    bottom: 100px;
+    right: 24px;
+    z-index: 1000000;
+  }
+
+  /* ==== Voice Assistant Product Cards ==== */
+
+  .voice-product-card {
+    border: 1px solid #e1e1e1;
+    border-radius: 10px;
+    padding: 8px;
+    margin: 6px 0;
+    background: #fafafa;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    font-size: 13px;
+  }
+
+  .voice-product-header {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .voice-product-image {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #fff;
+  }
+
+  .voice-product-main {
+    flex: 1;
+  }
+
+  .voice-product-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+
+  .voice-product-price {
+    font-size: 12px;
+    color: #444;
+    margin-bottom: 4px;
+  }
+
+  .voice-product-meta {
+    font-size: 11px;
+    color: #777;
+  }
+
+  .voice-card-add-btn {
+    margin-top: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: none;
+    background: #5bef60;
+    color: #111;
+    font-weight: 600;
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .voice-variants-label {
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 6px;
+    margin-bottom: 4px;
+    color: #555;
+  }
+
+  .voice-variants-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .voice-variant-pill {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fff;
+    padding: 4px 6px;
+    min-width: 95px;
+    max-width: 150px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .voice-variant-title {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .voice-variant-options {
+    font-size: 10px;
+    color: #555;
+  }
+
+  .voice-variant-meta {
+    font-size: 10px;
+    margin-top: 2px;
+  }
+
+  .voice-variant-meta.in-stock {
+    color: #1a7f37;
+    font-weight: 600;
+  }
+
+  .voice-variant-meta.out-of-stock {
+    color: #b3261e;
+    font-weight: 600;
+  }
+
+  .voice-variant-add-btn {
+    margin-top: 3px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    border: none;
+    background: #4fa9ff;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+</style>
+
+<script>
+  (function () {
+    let lastSearchProducts = [];
+
+    const micBtn = document.getElementById("voice-mic-button");
+    const chatWindow = document.getElementById("voice-chat-window");
+    const closeBtn = document.getElementById("voice-chat-close");
+    const chatContent = document.getElementById("chat-content");
+    const startBtn = document.getElementById("voice-start");
+    const statusSpan = document.getElementById("voice-status");
+    const textInput = document.getElementById("text-search-input");
+    const textBtn = document.getElementById("text-search-button");
+
+    function appendMessage(html) {
+      const div = document.createElement("div");
+      div.style.marginBottom = "8px";
+      div.innerHTML = html;
+      chatContent.appendChild(div);
+      chatContent.scrollTop = chatContent.scrollHeight;
+    }
+
+    function isAddCommand(text) {
+      return /^\s*add\b/i.test(text); // any sentence starting with "add"
+    }
+
+    async function callVoiceAPI(payload) {
+      console.log("[VoiceUI] → /apps/store-voice-command payload:", payload);
+      try {
+        const res = await fetch("/apps/store-voice-command", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const txt = await res.text();
+        console.log("[VoiceUI] Raw response:", txt);
+
+        try {
+          const json = JSON.parse(txt);
+          console.log("[VoiceUI] Parsed JSON:", json);
+          return json;
+        } catch (e) {
+          console.error("[VoiceUI] Invalid JSON from server", e);
+          appendMessage("<p style='color:red'>Invalid server JSON</p>");
+          return null;
+        }
+      } catch (e) {
+        console.error("[VoiceUI] Network error:", e);
+        appendMessage("<p style='color:red;'>Network error contacting server.</p>");
+        return null;
+      }
+    }
+
+    micBtn.onclick = () => {
+      const open = chatWindow.style.display === "none" || !chatWindow.style.display;
+      console.log("[VoiceUI] Toggle chat window:", open ? "open" : "close");
+      chatWindow.style.display = open ? "block" : "none";
+    };
+
+    closeBtn.onclick = () => {
+      console.log("[VoiceUI] Close chat window");
+      chatWindow.style.display = "none";
+    };
+
+    textBtn.onclick = () => {
+      const msg = textInput.value.trim();
+      if (!msg) return;
+
+      console.log("[VoiceUI] Text message:", msg);
+      appendMessage(`<p><strong>You:</strong> ${msg}</p>`);
+
+      if (isAddCommand(msg)) {
+        handleAddCommand(msg);
+      } else if (/show|view cart/i.test(msg)) {
+        viewCart();
+      } else {
+        searchProducts(msg);
+      }
+
+      textInput.value = "";
+    };
+
+    textInput.onkeypress = (e) => {
+      if (e.key === "Enter") textBtn.click();
+    };
+
+    let recognition = null;
+
+    if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+      recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+
+      recognition.onresult = (e) => {
+        const txt = e.results[0][0].transcript;
+        console.log("[VoiceUI] Speech recognized:", txt);
+        appendMessage(`<p><strong>You:</strong> ${txt}</p>`);
+
+        if (isAddCommand(txt)) {
+          handleAddCommand(txt);
+        } else if (/show|view cart/i.test(txt)) {
+          viewCart();
+        } else {
+          searchProducts(txt);
+        }
+      };
+
+      recognition.onerror = (e) => {
+        console.error("[VoiceUI] Speech recognition error:", e);
+        statusSpan.textContent = "Voice error";
+      };
+
+      startBtn.onclick = () => {
+        console.log("[VoiceUI] Start voice recognition");
+        statusSpan.textContent = "Listening…";
+        recognition.start();
+      };
+
+      recognition.onend = () => {
+        console.log("[VoiceUI] Voice recognition ended");
+        statusSpan.textContent = "Idle";
+      };
+    } else {
+      console.warn("[VoiceUI] SpeechRecognition not supported");
+      statusSpan.innerHTML = "Voice not supported";
+    }
+
+    // Helper: build product card HTML with variants
+    function buildProductCardHTML(product, index, opts = {}) {
+      const { showAddByIndexButton = true } = opts;
+
+      const img = product.featuredImage?.url || "https://via.placeholder.com/80";
+      const priceNum = Number(product.priceRange?.minVariantPrice?.amount || 0);
+      const price = isNaN(priceNum) ? 0 : Math.round(priceNum);
+
+      // Build variants pills
+      const variantEdges = product.variants?.edges || [];
+      const variantsHtml = variantEdges
+        .map((edge, vIdx) => {
+          const v = edge.node;
+          const optionsText = (v.selectedOptions || [])
+            .map((o) => `${o.name}: ${o.value}`)
+            .join(" • ");
+
+          const availabilityClass = v.availableForSale
+            ? "in-stock"
+            : "out-of-stock";
+          const availabilityText = v.availableForSale ? "In stock" : "Out of stock";
+
+          return `
+            <div class="voice-variant-pill">
+              <div class="voice-variant-title">${v.title}</div>
+              <div class="voice-variant-options">${optionsText || ""}</div>
+              <div class="voice-variant-meta ${availabilityClass}">
+                ${availabilityText}
+              </div>
+              <button
+                class="voice-variant-add-btn"
+                onclick="addVariant(${index}, ${vIdx})"
+              >
+                Add this
+              </button>
+            </div>
+          `;
+        })
+        .join("");
+
+      return `
+        <div class="voice-product-card">
+          <div class="voice-product-header">
+            <img src="${img}" class="voice-product-image" alt="${product.title}">
+            <div class="voice-product-main">
+              <div class="voice-product-title">${index + 1}. ${product.title}</div>
+              <div class="voice-product-price">From ₹${price}</div>
+              <div class="voice-product-meta">
+                ${product.handle ? `Handle: ${product.handle}` : ""}
+              </div>
+              ${
+                showAddByIndexButton
+                  ? `<button class="voice-card-add-btn" onclick="addByIndex(${index})">
+                      Quick add (default variant)
+                     </button>`
+                  : ""
+              }
+            </div>
+          </div>
+
+          ${
+            variantEdges.length
+              ? `<div class="voice-variants-label">Variants:</div>
+                 <div class="voice-variants-grid">
+                   ${variantsHtml}
+                 </div>`
+              : ""
+          }
+        </div>
+      `;
+    }
+
+    async function searchProducts(text) {
+      console.log("[VoiceUI] searchProducts query:", text);
+      statusSpan.textContent = "Searching...";
+      const data = await callVoiceAPI({ action: "search", search: text });
+      statusSpan.textContent = "Idle";
+
+      if (!data || !data.products || !data.products.length) {
+        console.warn("[VoiceUI] No products found for", text);
+        appendMessage(
+          `<p>❌ No product found for "<b>${text}</b>"</p>`
+        );
+        return;
+      }
+
+      lastSearchProducts = data.products;
+      console.log("[VoiceUI] Products received:", lastSearchProducts);
+      appendMessage(`<p>🔎 Found ${data.products.length} products:</p>`);
+
+      data.products.forEach((p, i) => {
+        const cardHtml = buildProductCardHTML(p, i, {
+          showAddByIndexButton: true,
+        });
+        appendMessage(cardHtml);
+      });
+    }
+
+    // Global function for inline "Quick add" button (default variant)
+    window.addByIndex = (idx) => {
+      console.log("[VoiceUI] addByIndex called:", idx);
+      const product = lastSearchProducts[idx];
+      if (!product) {
+        console.warn("[VoiceUI] No product at index", idx);
+        appendMessage(`<p style="color:red;">Product index invalid</p>`);
+        return;
+      }
+
+      const variant =
+        product.variants?.edges?.find((x) => x.node.availableForSale)?.node ||
+        product.variants?.edges?.[0]?.node;
+
+      if (!variant) {
+        console.warn("[VoiceUI] No variant found for product", product.title);
+        appendMessage(`<p style="color:red;">No valid variant for this product</p>`);
+        return;
+      }
+
+      addToCart(product, variant);
+    };
+
+    // Global: add specific variant from variant pills
+    window.addVariant = (productIndex, variantIndex) => {
+      console.log("[VoiceUI] addVariant called:", { productIndex, variantIndex });
+      const product = lastSearchProducts[productIndex];
+      if (!product) {
+        console.warn("[VoiceUI] No product at index", productIndex);
+        appendMessage(`<p style="color:red;">Product index invalid</p>`);
+        return;
+      }
+
+      const edge = product.variants?.edges?.[variantIndex];
+      const variant = edge?.node;
+      if (!variant) {
+        console.warn("[VoiceUI] No variant at index", variantIndex, "for product", product.title);
+        appendMessage(`<p style="color:red;">Variant index invalid</p>`);
+        return;
+      }
+
+      addToCart(product, variant);
+    };
+
+    async function handleAddCommand(command) {
+      console.log("[VoiceUI] handleAddCommand:", command);
+      if (!lastSearchProducts.length) {
+        console.warn("[VoiceUI] handleAddCommand called with empty search list");
+        appendMessage(`<p style="color:red;">Search first</p>`);
+        return;
+      }
+
+      const lower = command.toLowerCase();
+
+      // 1️⃣ Try "add 2nd product", "add 1 product", etc
+      const indexMatch = lower.match(/add\s+(\d+)(st|nd|rd|th)?/i);
+      if (indexMatch) {
+        const i = parseInt(indexMatch[1], 10) - 1;
+        console.log("[VoiceUI] Parsed index from command:", i);
+        const product = lastSearchProducts[i];
+
+        if (!product) {
+          console.warn("[VoiceUI] No product for index", i);
+          appendMessage(`<p style="color:red;">Product index not found</p>`);
+          return;
+        }
+
+        const colorMatch = lower.match(/black|blue|red|white|grey|yellow|pink|brown|green|orange/i);
+        const sizeMatch = lower.match(/size\s*(\d+|\w+)/i);
+        const color = colorMatch?.[0]?.toLowerCase() || null;
+        const size = sizeMatch?.[1]?.toLowerCase() || null;
+
+        const variants = product.variants.edges.map((v) => v.node);
+        const selectedVariant =
+          variants.find((v) => {
+            const opt = Object.fromEntries(
+              v.selectedOptions.map((o) => [
+                o.name.toLowerCase(),
+                o.value.toLowerCase(),
+              ])
+            );
+            return (!color || opt.color === color) && (!size || opt.size === size);
+          }) || variants[0];
+
+        console.log("[VoiceUI] Selected variant (index branch):", {
+          productTitle: product.title,
+          variantId: selectedVariant?.id,
+          color,
+          size,
+          options: selectedVariant?.selectedOptions,
+        });
+
+        if (!selectedVariant) {
+          appendMessage(`<p style="color:red;">No matching variant for selected product</p>`);
+          return;
+        }
+
+        addToCart(product, selectedVariant, color, size);
+        return;
+      }
+
+      // 2️⃣ Name based: e.g. "add levis jeans with size 32 to cart"
+      const colorMatch = lower.match(/black|blue|red|white|grey|yellow|pink|brown|green|orange/i);
+      const sizeMatch = lower.match(/size\s*(\d+|\w+)/i);
+      const color = colorMatch?.[0]?.toLowerCase() || null;
+      const size = sizeMatch?.[1]?.toLowerCase() || null;
+
+      const searchText = lower; // full command text
+      const matchedIndices = [];
+
+      lastSearchProducts.forEach((p, idx) => {
+        const title = (p.title || "").toLowerCase();
+        if (title && searchText.includes(title)) {
+          matchedIndices.push(idx);
+        }
+      });
+
+      console.log("[VoiceUI] Products matching by name:", {
+        searchText,
+        matchedIndices,
+      });
+
+      if (!matchedIndices.length) {
+        appendMessage(
+          `<p style="color:red;">No product name from your last search matched this command.</p>`
+        );
+        return;
+      }
+
+      // Single match → directly add
+      if (matchedIndices.length === 1) {
+        const product = lastSearchProducts[matchedIndices[0]];
+        const variants = product.variants.edges.map((v) => v.node);
+
+        const selectedVariant =
+          variants.find((v) => {
+            const opt = Object.fromEntries(
+              v.selectedOptions.map((o) => [
+                o.name.toLowerCase(),
+                o.value.toLowerCase(),
+              ])
+            );
+            return (!color || opt.color === color) && (!size || opt.size === size);
+          }) || variants[0];
+
+        console.log("[VoiceUI] Selected variant (name branch, single match):", {
+          productTitle: product.title,
+          variantId: selectedVariant?.id,
+          color,
+          size,
+          options: selectedVariant?.selectedOptions,
+        });
+
+        if (!selectedVariant) {
+          appendMessage(`<p style="color:red;">No matching variant for that product</p>`);
+          return;
+        }
+
+        addToCart(product, selectedVariant, color, size);
+        return;
+      }
+
+      // Multiple matches → show list and ask for index (with full cards)
+      appendMessage(
+        `<p>Found multiple products matching your request. Please say e.g. "add <b>2nd product</b>":</p>`
+      );
+
+      matchedIndices.forEach((idx) => {
+        const p = lastSearchProducts[idx];
+        const cardHtml = buildProductCardHTML(p, idx, {
+          showAddByIndexButton: false, // user should specify index via voice
+        });
+        appendMessage(cardHtml);
+      });
+    }
+
+    async function addToCart(product, variant, color = null, size = null) {
+      const numericId = variant.id.replace("gid://shopify/ProductVariant/", "");
+      console.log("[VoiceUI] addToCart payload:", {
+        numericId,
+        productTitle: product.title,
+        variantTitle: variant.title,
+        color,
+        size,
+      });
+
+      try {
+        const res = await fetch("/cart/add.js", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            id: numericId,
+            quantity: 1,
+            properties: {
+              added_by_voice: "true",
+              color: color || "none",
+              size: size || "free",
+            },
+          }),
+        });
+
+        const text = await res.text();
+        console.log("[VoiceUI] /cart/add.js response:", {
+          status: res.status,
+          body: text,
+        });
+
+        let data = null;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          // non-JSON is acceptable
+        }
+
+        if (!res.ok) {
+          console.error("Cart add error", res.status, text);
+          appendMessage(
+            `<p style="color:red;">❌ Failed — Variant invalid or unavailable</p>`
+          );
+          return;
+        }
+
+        appendMessage(
+          `<p style="color:#53ff6a;">
+            ✔ Added <b>${product.title}</b> — <b>${variant.title}</b>
+          </p>`
+        );
+      } catch (e) {
+        console.error("[VoiceUI] Network error adding to cart", e);
+        appendMessage(
+          `<p style="color:red;">Network error adding to cart</p>`
+        );
+      }
+    }
+
+    async function viewCart() {
+      console.log("[VoiceUI] viewCart called");
+      statusSpan.textContent = "Fetching cart...";
+
+      try {
+        const res = await fetch("/cart.js", {
+          headers: { Accept: "application/json" },
+        });
+        const cart = await res.json();
+
+        console.log("[VoiceUI] /cart.js result:", cart);
+        statusSpan.textContent = "Idle";
+
+        if (!cart || !cart.items || !cart.items.length) {
+          appendMessage(`<p>🛒 Cart empty</p>`);
+          return;
+        }
+
+        appendMessage(`<p><b>Your Cart:</b></p>`);
+
+        cart.items.forEach((item, i) => {
+          appendMessage(
+            `<div style="border-left:4px solid #5BEF60;padding-left:5px;margin:3px 0">
+              ${i + 1}. ${item.product_title} – ${item.quantity} × ${
+                item.variant_title
+              }
+            </div>`
+          );
+        });
+
+        appendMessage(
+          `<p>
+            <a
+              href="/cart"
+              style="
+                background:#5BEF60;
+                padding:6px 10px;
+                color:black;
+                border-radius:4px;
+                font-weight:600;
+                display:inline-block;
+              "
+            >
+              Go to Cart
+            </a>
+          </p>`
+        );
+      } catch (e) {
+        statusSpan.textContent = "Idle";
+        console.error("Cart fetch error", e);
+        appendMessage(
+          `<p style="color:red;">❌ Failed to fetch cart</p>`
+        );
+      }
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Voice Mic",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}
